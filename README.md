@@ -31,7 +31,9 @@ Call the API with a GET request to `https://getmarkers-wiffvxy7vq-uc.a.run.app/`
 
 #### Javascript
 ```javascript
-fetch('https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description').then(res => res.json()).then(data => {
+fetch('https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description')
+.then(res => res.json())
+.then(data => {
     // Handle data
 });
 ```
