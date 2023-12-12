@@ -21,6 +21,7 @@ const haversine = (lat1, long1, lat2, long2) => {
 };
 
 exports.getMarkers = onRequest({ cors: false }, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
     try {
         // Download and convert bytes
         //const data = JSON.parse(String.fromCharCode.apply(String, new Uint8Array(await getBytes(ref(storage, 'markers/' + req.query.state.toLowerCase() + '.json')))));
