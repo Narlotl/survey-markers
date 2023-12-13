@@ -12,7 +12,7 @@ Call the API with a GET request to `https://getmarkers-wiffvxy7vq-uc.a.run.app/`
 | ---- | ----------- | -------- |
 | state | The state/territory to retrieve in 2 letter code format | `true` |
 | data | The data fields to return (will return all data if left empty) | recommended |
-| location | The lat/long coordinates to center the search | with radius |
+| latitude/longitude | The lat/long coordinates to center the search | with radius |
 | radius | How far in kilometers to search from `location` | with location |
 | search | A RegEx query or string search for marker descriptions | `false` |
 | condition | The last recorded condition of the marker | `false` |
