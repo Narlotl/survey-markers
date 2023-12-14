@@ -4,14 +4,20 @@ An API for [NGS geodetic survey markers](https://geodesy.noaa.gov/datasheets/).
 
 ## Usage
 
-Call the API with a GET request to `https://getmarkers-wiffvxy7vq-uc.a.run.app/`.
+Call the API with a GET request to `https://us-central1-survey-markers.cloudfunctions.net/getMarkers`.
 
 ### Parameters
+
+> [!WARNING]
+> Parameter filtering is only available if the state's JSON file is less than 32MB. Requests to states over 32MB will redirect to the state's direct file and won't be filtered.
+> States over 32MB: FL, CA, TX, NC, MN, SC, WA.
+> Example: `https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=ca -> https://firebasestorage.googleapis.com/v0/b/survey-markers.appspot.com/o/ca.json`
 
 | Name | Description | Required |
 | ---- | ----------- | -------- |
 | state | The state/territory to retrieve in 2 letter code format | `true` |
-| data | The data fields to return (will return all data if left empty) | recommended |
+| data | The data fields to return (will return all data if left empty) | recommended, especially for large states |
+| id | The single marker ID to return | `false` |
 | location | The lat/long coordinates to center the search | with radius |
 | radius | How far in kilometers to search from `location` | with location |
 | search | A RegEx query or string search for marker descriptions | `false` |
@@ -31,7 +37,7 @@ Call the API with a GET request to `https://getmarkers-wiffvxy7vq-uc.a.run.app/`
 
 #### Javascript
 ```javascript
-fetch('https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description')
+fetch('https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description')
 .then(res => res.json())
 .then(data => {
     // Handle data
@@ -42,7 +48,7 @@ fetch('https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description'
 from requests import get
 from json import loads
 
-req = get("https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description")
+req = get("https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description")
 
 json = loads(req.text)
 
@@ -60,7 +66,7 @@ import com.google.gson.JsonObject;
 
 public class Main {
     public static void main(String[] args) {
-        URL url = new URL("https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description");
+        URL url = new URL("https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description");
 
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
@@ -86,7 +92,7 @@ public class Main {
 require 'net/http'
 require 'json'
 
-url = URI.parse('https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description')
+url = URI.parse('https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description')
 http = Net::HTTP.new(url.host, url.port)
 http.use_ssl = (url.scheme == 'https')
 
@@ -112,7 +118,7 @@ type Response struct {
 }
 
 func main() {
-	url := "https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description"
+	url := "https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description"
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -141,7 +147,7 @@ func main() {
 ```php
 <?php
 
-$url = 'https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description';
+$url = 'https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description';
 $response = file_get_contents($url);
 $json_response = json_decode($response, true);
 
@@ -154,7 +160,7 @@ use reqwest::blocking::get;
 use serde_json::json;
 
 fn main() {
-    let url = "https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description";
+    let url = "https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description";
     let response = get(url);
 
     let mut body = String::new();
@@ -192,7 +198,7 @@ int main()
         return 1;
     }
 
-    std::string url = "https://getmarkers-wiffvxy7vq-uc.a.run.app/?state=aa&data=id,description";
+    std::string url = "https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=aa&data=id,description";
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 
     std::string response;

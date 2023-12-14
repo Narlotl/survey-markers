@@ -1,13 +1,10 @@
 const { initializeApp } = require('firebase/app');
 const { onRequest } = require('firebase-functions/v2/https');
-const { getStorage, ref, uploadBytesResumable, connectStorageEmulator, getBytes, listAll, uploadBytes, getStream } = require('firebase/storage');
-const { Parse } = require('unzipper');
+const { getStorage, ref, connectStorageEmulator, getDownloadURL, listAll, getMetadata } = require('firebase/storage');
 const { firebaseConfig } = require('./secrets');
-const { getFirestore, collection, setDoc, doc } = require('firebase/firestore');
 
 const app = initializeApp(firebaseConfig);
 const storage = getStorage(app);
-const db = getFirestore(app);
 // Only for testing
 // connectStorageEmulator(storage, '127.0.0.1', 9199);
 
@@ -20,80 +17,87 @@ const haversine = (lat1, long1, lat2, long2) => {
     return (6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 };
 
-exports.getMarkers = onRequest({ cors: false }, async (req, res) => {
+exports.getMarkers = onRequest((req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
+
     try {
-        // Download and convert bytes
-        //const data = JSON.parse(String.fromCharCode.apply(String, new Uint8Array(await getBytes(ref(storage, 'markers/' + req.query.state.toLowerCase() + '.json')))));
-        let data = '';
-        getStream(ref(storage, 'markers/' + req.query.state.toLowerCase() + '.json')).on('data', chunk => {
-            data += chunk;
-        }).on('end', () => {
-            data = JSON.parse(data);
-
-            // Filter by parameters
-            let ret = [];
-            let dataParam, location, offset, limit, reporter;
-            if (req.query.data)
-                dataParam = req.query.data.split(',');
-            if (req.query.location)
-                location = req.query.location.split(',');
-            if (req.query.offset)
-                offset = parseInt(req.query.offset);
+        const state = req.query.state.toLowerCase();
+        // Download data
+        const file = ref(storage, state + '.json');
+        getMetadata(file).then(metadata => {
+            const downloadUrl = getDownloadURL(file);
+            if (metadata.size >= 33554432)
+                downloadUrl.then(url => res.redirect(url));
             else
-                offset = 0;
-            if (req.query.limit)
-                limit = Math.min(offset + parseInt(req.query.limit, data.length));
-            else
-                limit = data.length;
-            if (req.query.reporter)
-                reporter = req.query.reporter.toUpperCase().split(',');
-            for (let i = offset; i < limit; i++) {
-                const marker = data[i];
-                let obj = {};
-                // Filter by loction and radius
-                if (location && req.query.radius)
-                    if (haversine(marker.lat, marker.long, location[0], location[1]) > req.query.radius)
-                        continue;
-                // Filter by search
-                if (req.query.search)
-                    if (!marker.description.match(new RegExp(req.query.search, 'gmi')))
-                        continue;
-                // Filter by condition
-                if (req.query.condition)
-                    if (!marker.history || marker.history.length == 0 || marker.history[marker.history.length - 1].condition != req.query.condition.toUpperCase())
-                        continue;
-                // Filter by reporter
-                if (req.query.reporter) {
-                    let hasReporter = false;
+                downloadUrl.then(url => fetch(url)).then(res => res.json()).then(data => {
+                    // Filter by parameters
+                    let ret = [];
+                    let dataParam, location, offset, limit, reporter;
+                    if (req.query.data)
+                        dataParam = req.query.data.split(',');
+                    if (req.query.location)
+                        location = req.query.location.split(',');
+                    if (req.query.offset)
+                        offset = parseInt(req.query.offset);
+                    else
+                        offset = 0;
+                    if (req.query.limit)
+                        limit = Math.min(offset + parseInt(req.query.limit, data.length));
+                    else
+                        limit = data.length;
+                    if (req.query.reporter)
+                        reporter = req.query.reporter.toUpperCase().split(',');
+                    for (let i = offset; i < limit; i++) {
+                        const marker = data[i];
+                        let obj = {};
+                        // Filter by ID
+                        if (req.query.id)
+                            if (marker.id != req.query.id)
+                                continue;
+                        // Filter by search
+                        if (req.query.search)
+                            if (!marker.description.match(new RegExp(req.query.search, 'gmi')))
+                                continue;
+                        // Filter by condition
+                        if (req.query.condition)
+                            if (!marker.history || marker.history.length == 0 || marker.history[marker.history.length - 1].condition != req.query.condition.toUpperCase())
+                                continue;
+                        // Filter by reporter
+                        if (req.query.reporter) {
+                            let hasReporter = false;
 
-                    for (const rep of reporter)
-                        for (const report of marker.history)
-                            if (report.reporter == rep) {
-                                hasReporter = true;
-                                break;
-                            }
-                    if (!hasReporter || (!marker.history || marker.history.length == 0))
-                        continue;
-                }
-                // Only include specified data
-                if (dataParam) {
-                    for (const datum of dataParam)
-                        if (marker[datum])
-                            obj[datum] = marker[datum];
-                }
-                // Send all data
-                else
-                    obj = marker;
+                            for (const rep of reporter)
+                                for (const report of marker.history)
+                                    if (report.reporter == rep) {
+                                        hasReporter = true;
+                                        break;
+                                    }
+                            if (!hasReporter || (!marker.history || marker.history.length == 0))
+                                continue;
+                        }
+                        // Filter by loction and radius
+                        if (location && req.query.radius)
+                            if (haversine(marker.lat, marker.long, location[0], location[1]) > req.query.radius)
+                                continue;
+                        // Only include specified data
+                        if (dataParam) {
+                            for (const datum of dataParam)
+                                if (marker[datum])
+                                    obj[datum] = marker[datum];
+                        }
+                        // Send all data
+                        else
+                            obj = marker;
 
-                ret.push(obj);
-            }
+                        ret.push(obj);
+                    }
 
-            res.status(200).json(ret).end();
+                    res.json(ret).status(200).end();
+                });
         });
     }
     catch (e) {
-        console.error(e);
+        console.error(e.message);
         // Handle errors
         if (e.code == 'storage/object-not-found')
             res.status(404).json({ code: 404, message: 'File ' + req.query.state + '.json not found' }).end();
