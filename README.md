@@ -2,20 +2,21 @@
 
 An API for [NGS geodetic survey markers](https://geodesy.noaa.gov/datasheets/).
 
-## Usage
+## Endpoints
 
-Call the API with a GET request to `https://us-central1-survey-markers.cloudfunctions.net/getMarkers`.
+Get markers: `https://us-central1-survey-markers.cloudfunctions.net/getMarkers?parameters`\
+Get images: `https://us-central1-survey-markers.cloudfunctions.net/getImages?id=ID`
 
 ### Parameters
 
 > [!WARNING]
 > Parameter filtering is only available if the state's JSON file is less than 32MB. Requests to states over 32MB will redirect to the state's direct file and won't be filtered.
 > States over 32MB: FL, CA, TX, NC, MN, SC, WA.
-> Example: `https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=ca -> https://firebasestorage.googleapis.com/v0/b/survey-markers.appspot.com/o/ca.json`
+> Example: `https://us-central1-survey-markers.cloudfunctions.net/getMarkers?state=ca` → `https://firebasestorage.googleapis.com/v0/b/survey-markers.appspot.com/o/ca.json`
 
 | Name | Description | Required |
 | ---- | ----------- | -------- |
-| state | The state/territory to retrieve in 2 letter code format | `true` |
+| state | The state/territory to retrieve in 2 letter code format. State codes can be found at `https://firebasestorage.googleapis.com/v0/b/survey-markers.appspot.com/o/states.json?alt=media&token=56e7422d-1377-4aa4-8607-30d946323b09`. | `true` |
 | data | The data fields to return (will return all data if left empty) | recommended, especially for large states |
 | id | The single marker ID to return | `false` |
 | location | The lat/long coordinates to center the search | with radius |

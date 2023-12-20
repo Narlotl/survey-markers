@@ -104,3 +104,22 @@ exports.getMarkers = onRequest((req, res) => {
         res.status(500).json({ code: 500, message: e.message }).end();
     }
 });
+
+exports.getImages = onRequest((req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+
+    if (req.query.id)
+        fetch('https://geodesy.noaa.gov/cgi-bin/get_image.prl?PROCESSING=list&PID=' + req.query.id).then(res => res.text()).then(data => {
+            if (data.includes('ERROR'))
+                res.status(422).json({ code: 422, message: 'Invalid ID format, must be 2 uppercase letters followed by 4 digits' }).end();
+            else if (data.includes('No images found'))
+                res.status(200).json([]).end();
+            else
+                res.status(200).json(
+                    [...data.matchAll(/<img.*?src="(.*?)".*?>/gmi)]
+                        .map(match => 'https://geodesy.noaa.gov' + match[1].replace('get_thumbnail', 'get_image'))
+                ).end();
+        });
+    else
+        res.status(422).json({ code: 422, message: 'Missing ID parameter' }).end();
+});

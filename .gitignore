@@ -4,3 +4,4 @@ functions/secrets.js
 ui-debug.log
 .firebaserc
 firebase-debug.log
+states.json
