@@ -82,8 +82,10 @@ exports.getMarkers = onRequest((req, res) => {
                 reporter = req.query.reporter.toUpperCase().split(',');
 
             let done = 0, i;
-            for (i = offset; done < limit && bytes < MAX_BYTES; i++) {
+            for (i = offset; i < data.length && done < limit && bytes < MAX_BYTES; i++) {
                 const marker = data[i];
+                // This might not be needed
+                if (!marker) continue;
                 let obj = {};
                 // Filter by ID
                 if (req.query.id)
