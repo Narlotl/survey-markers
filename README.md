@@ -86,12 +86,6 @@ Example response:
 
 - [Javascript](#javascript)
 - [Python](#python)
-- [Java](#java)
-- [Ruby](#ruby)
-- [Go](#go)
-- [PHP](#php)
-- [Rust](#rust)
-- [C++](#c++)
 
 #### Javascript
 ```javascript
